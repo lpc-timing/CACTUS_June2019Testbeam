@@ -2,8 +2,8 @@ from ROOT import TFile,TTree,TCanvas,TH2F
 import os
 
 
-StartRun = 17040
-StopRun = 17062
+StartRun = 16725
+StopRun = 17039
 
 InSyncRuns = list()
 OutOfSyncRuns = list()
@@ -32,11 +32,11 @@ for Run in range(StartRun,StopRun+1,1):
     effInside = num.GetBinContent(num.GetXaxis().FindFixBin(18.0),num.GetYaxis().FindFixBin(25.0))
     effOutside = num.GetBinContent(num.GetXaxis().FindFixBin(18.0),num.GetYaxis().FindFixBin(18.0))
 
-    #print num.GetXaxis().FindFixBin(18.0), " ", num.GetYaxis().FindFixBin(25.0), " ", effInside
-    #print num.GetXaxis().FindFixBin(18.0), " ", num.GetYaxis().FindFixBin(18.0), " ", effOutside
+    print num.GetXaxis().FindFixBin(18.0), " ", num.GetYaxis().FindFixBin(25.0), " ", effInside
+    print num.GetXaxis().FindFixBin(18.0), " ", num.GetYaxis().FindFixBin(18.0), " ", effOutside
 
 
-    if effInside > 0.90 and effOutside < 0.20:
+    if effInside > 0.80 and effOutside < 0.30:
         IsInSync = True
 
     print "Run "+str(Run)+" : "+str(IsInSync)
