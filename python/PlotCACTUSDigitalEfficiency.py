@@ -3,7 +3,11 @@ import os
 import EfficiencyUtils
 
 
-inputfile = "/eos/uscms/store/user/cmstestbeam/2019_04_April_CMSTiming/KeySightScope/RecoData/TimingDAQRECO/RecoWithTracks/v6_CACTUSSkim/Completed/Data_CACTUSDigital_HighThreshold_16428-16454.root"
+#inputfile = "/eos/uscms/store/user/cmstestbeam/2019_04_April_CMSTiming/KeySightScope/RecoData/TimingDAQRECO/RecoWithTracks/v6_CACTUSSkim/Completed/Data_CACTUSDigital_HighThreshold_16428-16454.root"
+#inputfile = "/eos/uscms/store/user/cmstestbeam/2019_04_April_CMSTiming/KeySightScope/RecoData/TimingDAQRECO/RecoWithTracks/v6_CACTUSSkim/Completed/Data_CACTUSDigital_LowThreshold_16467-16488.root"
+inputfile = "/eos/uscms/store/user/cmstestbeam/2019_04_April_CMSTiming/KeySightScope/RecoData/TimingDAQRECO/RecoWithTracks/v6_CACTUSSkim/Completed/Data_CACTUSDigital_TimingOptimized_HighTreshold_16492-16516.root"
+#inputfile = "/eos/uscms/store/user/cmstestbeam/2019_04_April_CMSTiming/KeySightScope/RecoData/TimingDAQRECO/RecoWithTracks/v6_CACTUSSkim/Completed/Data_CACTUSDigital_TimingOptimized_LowThreshold_16517-16711.root"
+
 
 if not os.path.exists(inputfile):
     print "input file "+inputfile+" does not exist"
@@ -23,7 +27,7 @@ num = TH2F("num",";x;y",20,19,21,20,23,25)
 tree.Draw("y_dut[2]:x_dut[2]>>den","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0","colz")
 tree.Draw("y_dut[2]:x_dut[2]>>num","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 && amp[3] > 200 ","colz")
 
-EfficiencyUtils.Plot2DEfficiency(num, den, "CACTUSEfficiencyVsXY", "CACTUS Pixel (5,3) Digital", "X [mm]", 19.0, 21.0, "Y [mm]", 23.0, 25.0, -0.001, 0.25)
+EfficiencyUtils.Plot2DEfficiency(num, den, "CACTUSEfficiencyVsXY", "CACTUS Pixel (5,3) Digital", "X [mm]", 19.0, 21.0, "Y [mm]", 23.0, 25.0, -0.001, 0.20)
 
 
 ##########################

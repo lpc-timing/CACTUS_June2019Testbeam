@@ -27,15 +27,15 @@ tree_5_4 = file_5_4.Get("pulse")
 file_5_10 = TFile(inputfile_5_10)
 tree_5_10 = file_5_10.Get("pulse")
 
-timeCut = " && (t_peak[3] - t_peak[0])*1e9 > 6 && !((t_peak[3] - t_peak[0])*1e9  < 16) "
-ampCut = " && amp[3] > 15"
+timeCut = " && (t_peak[3] - t_peak[0])*1e9 > 6 && ((t_peak[3] - t_peak[0])*1e9  < 16) "
+ampCut = " && amp[3] > 0"
 
 ##########################
 #2D Efficiency 
 ##########################
 den = TH2F("den",";x;y",20,19,21,20,23,25)
 num = TH2F("num",";x;y",20,19,21,20,23,25)
-tree_5_3.Draw("y_dut[2]:x_dut[2]>>den","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0"+timeCut,"colz")
+tree_5_3.Draw("y_dut[2]:x_dut[2]>>den","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0","colz")
 tree_5_3.Draw("y_dut[2]:x_dut[2]>>num","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0"+timeCut+ampCut,"colz")
 
 EfficiencyUtils.Plot2DEfficiency(num, den, "CACTUSAnalog_Pixel5_3_EfficiencyVsXY", "CACTUS Pixel (5,3) Analog", "X [mm]", 19.0, 21.0, "Y [mm]", 23.0, 25.0, -0.001, 1.0)
@@ -47,11 +47,12 @@ EfficiencyUtils.Plot2DEfficiency(num, den, "CACTUSAnalog_Pixel5_3_EfficiencyVsXY
 
 den_X = TH1F("den_X",";X [mm];Number of Events",20,19,21)
 num_X = TH1F("num_X",";X [mm];Number of Events",20,19,21)
-tree_5_3.Draw("x_dut[2]>>den_X","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 && y_dut[2] > 23.52 && y_dut[2] < 23.98"+timeCut,"")
+tree_5_3.Draw("x_dut[2]>>den_X","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 && y_dut[2] > 23.52 && y_dut[2] < 23.98","")
 tree_5_3.Draw("x_dut[2]>>num_X","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 && y_dut[2] > 23.52 && y_dut[2] < 23.98"+timeCut+ampCut,"")
 
-
 EfficiencyUtils.Plot1DEfficiency(num_X,den_X,"CACTUSAnalog_Pixel5_3_EfficiencyVsX","CACTUS Pixel (5,3) Analog","X [mm]",19.0,21.0)
+#EfficiencyUtils.Plot1DEfficiencyWithFit(tree_5_3,"CACTUSAnalog_Pixel5_3_EfficiencyVsX","CACTUS Pixel (5,3) Analog","X [mm]",19.0,21.0)
+
 
 
 
@@ -60,7 +61,7 @@ EfficiencyUtils.Plot1DEfficiency(num_X,den_X,"CACTUSAnalog_Pixel5_3_EfficiencyVs
 ##########################
 den_Y = TH1F("den_Y",";X [mm];Number of Events",20,23,25)
 num_Y = TH1F("num_Y",";X [mm];Number of Events",20,23,25)
-tree_5_3.Draw("y_dut[2]>>den_Y","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 && x_dut[2] > 19.52 && x_dut[2] < 20.45"+timeCut,"")
+tree_5_3.Draw("y_dut[2]>>den_Y","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 && x_dut[2] > 19.52 && x_dut[2] < 20.45","")
 tree_5_3.Draw("y_dut[2]>>num_Y","ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 && x_dut[2] > 19.52 && x_dut[2] < 20.45"+timeCut+ampCut,"")
 
 EfficiencyUtils.Plot1DEfficiency(num_Y,den_Y,"CACTUSAnalog_Pixel5_3_EfficiencyVsY","CACTUS Pixel (5,3) Analog","Y [mm]",23.0,25.0)
