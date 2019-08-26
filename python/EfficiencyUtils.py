@@ -216,15 +216,32 @@ def Plot1DEfficiencyWithFit( tree, plotname, topTitle, xAxisTitle, xAxisRangeLow
 
 ##############################################################################
 #1D Efficiency including bkg subtraction with amplitude histogram
+# We purify the signal sample by requiring that signals fall inside a window:
+# ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)
+# The efficiency of the time window cut on signal is measured to be 98.9% - using large-sized signals
+# From this dataset: /eos/uscms/store/user/cmstestbeam/2019_04_April_CMSTiming/KeySightScope/RecoData/TimingDAQRECO/RecoWithTracks/v6_CACTUSSkim/Completed/Data_CACTUSAnalog_Pixel5_3_16216-16263.root
+# Using this command: 
+# pulse->Draw("((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)","(x_dut[2] > 19.6 && x_dut[2] < 20.4 && y_dut[2] > 23.6 && y_dut[2] < 23.9) && amp[3] > 20")
+# Therefore we increase the measured efficiency by 1.1% to correct for the inefficiency of the time window ct
 ##############################################################################
 
-def Plot1DEfficiencyWithBkgSubtraction( tree, num, den, plotname, topTitle, xAxisTitle, xAxisRangeLow, xAxisRangeHigh ) :
+def Plot1DEfficiencyWithBkgSubtraction( tree, num, den, axis, pixel, plotname, topTitle, xAxisTitle, xAxisRangeLow, xAxisRangeHigh ) :
 
     #make amp histogram
     c = TCanvas("c","c", 800,800)
 
-    ampHist = TH1F("ampHist",";Amplitude [mV]; Number of Events", 25,0,50)
-    tree.Draw("amp[3]>>ampHist"," x_dut[2] > 19.6 && x_dut[2] < 19.7 && y_dut[2] > 23.5 && y_dut[2] < 24.0 && ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)")
+    #Each pixel has slightly different time distribution and efficiency of time window cut differs a bit
+    #We derive corresponding efficiency corrections for each pixel 
+    timeWindowCutEfficiency = 1.0
+    if (pixel == "5_3"):
+        timeWindowCutEfficiency = 0.989
+    if (pixel == "5_4"):
+        timeWindowCutEfficiency = 0.9478
+    if (pixel == "5_10"):
+        timeWindowCutEfficiency = 0.9643
+
+    #ampHist = TH1F("ampHist",";Amplitude [mV]; Number of Events", 25,0,50)
+    #tree.Draw("amp[3]>>ampHist"," x_dut[2] > 19.6 && x_dut[2] < 19.7 && y_dut[2] > 23.5 && y_dut[2] < 24.0 && ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)")
     
     nbins = num.GetXaxis().GetNbins()
     x = list()
@@ -240,19 +257,64 @@ def Plot1DEfficiencyWithBkgSubtraction( tree, num, den, plotname, topTitle, xAxi
         xerrlow =  num.GetXaxis().GetBinCenter(b+1) - num.GetXaxis().GetBinLowEdge(b+1)  
         xerrhigh = num.GetXaxis().GetBinUpEdge(b+1) - num.GetXaxis().GetBinCenter(b+1)  
 
-        #Noise template: bins 0+1+2 (0-6mV) gives 0.287151 of the total
+        #Noise templates: 
+        #Pixel 5,3 : amp <= 6mV gives 0.4417 of the total and has 0 signal contamination
+        #Pixel 5,4 : amp <= 10mV gives 0.0404 of the total and has 0 signal contamination
+        #Pixel 5,10 : amp < gives 0. of the total and has 0 signal contamination
         #We will assume that bins 0+1+2 (0-6mV) do not contain ANY signal.
         #We count the number of events in those bins and divide by 0.4417 to get
         #the total number of noise events. We subtract those from the numerator.
+
+        #Noise template is made from this data (outside of sensor region AND outside of time window):  
+        #/eos/uscms/store/user/cmstestbeam/2019_04_April_CMSTiming/KeySightScope/RecoData/TimingDAQRECO/RecoWithTracks/v6_CACTUSSkim/Completed/Data_CACTUSAnalog_Pixel5_3_16216-16263.root
+        #pulse->Draw("amp[3]>>ampHist(25,0,50)","!(x_dut[2] > 19.4 && x_dut[2] < 20.6 && y_dut[2] > 23.4 && y_dut[2] < 24.1) && !((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)")
+
+        noiseSelection = ""
+        noiseSelectionCRFraction = 1
+        xPositionSelection = ""
+        yPositionSelection = ""
+        if (pixel == "5_3"):
+            noiseSelection = " && amp[3] <= 6"
+            noiseSelectionCRFraction = 0.4417
+            xPositionSelection = " && x_dut[2] > 19.5 && x_dut[2] < 20.5 "
+            yPositionSelection = " && y_dut[2] > 23.5 && y_dut[2] < 24.0 "
+        if (pixel == "5_4"):
+            noiseSelection = " && amp[3] <= 14"
+            noiseSelectionCRFraction = 0.4053
+            xPositionSelection = " && x_dut[2] > 18.5 && x_dut[2] < 19.5 "
+            yPositionSelection = " && y_dut[2] > 23.5 && y_dut[2] < 24.0 "
+        if (pixel == "5_10"):
+            noiseSelection = " && amp[3] <= 13"
+            noiseSelectionCRFraction = 0.3802
+            xPositionSelection = " && x_dut[2] > 19.5 && x_dut[2] < 20.5 "
+            yPositionSelection = " && y_dut[2] > 23.0 && y_dut[2] < 23.5 "
+
+        print "noise selection = " + noiseSelection + " " + str(noiseSelectionCRFraction)
+
+        positionSelectionString = ""
+        if (axis == "x"):
+            positionSelectionString = " && x_dut[2] > "+str(num.GetXaxis().GetBinLowEdge(b+1))+ " && x_dut[2] < " + str(num.GetXaxis().GetBinUpEdge(b+1)) + yPositionSelection
+        if (axis == "y"):
+            positionSelectionString = xPositionSelection + " && y_dut[2] > "+str(num.GetXaxis().GetBinLowEdge(b+1))+ " && y_dut[2] < " + str(num.GetXaxis().GetBinUpEdge(b+1)) + " "
+
+
+        print "numerator: " + "ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 " + positionSelectionString + " && ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)"
+
+
         ampHist = TH1F("ampHist"+"_"+str(b),";Amplitude [mV]; Number of Events", 25,0,50)
-        tree.Draw("amp[3]>>ampHist"+"_"+str(b)," x_dut[2] > 19.6 && x_dut[2] < 19.7 && y_dut[2] > 23.5 && y_dut[2] < 24.0 && ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)")
+        denominatorCount = tree.GetEntries("ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 " + positionSelectionString + " ")
+        tmpNumeratorTotalCount = tree.GetEntries("ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 " + positionSelectionString + " && ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16)")
+        tmpNumeratorNoiseControlRegionCount = tree.GetEntries("ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 " + positionSelectionString + " && ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16) " + noiseSelection)
+        tmpNumeratorSignalCount = tmpNumeratorTotalCount - tmpNumeratorNoiseControlRegionCount / noiseSelectionCRFraction
+
+        print "ntracks==1 && y_dut[0] > 0 && npix>0 && nback>0 " + positionSelectionString + " && ((t_peak[3] - t_peak[0])*1e9 > 6 && (t_peak[3] - t_peak[0])*1e9  < 16) " + noiseSelection
 
         ratio = 0
         errLow = 0
         errHigh = 0
 
-        n1 = int(num.GetBinContent(b+1));
-        n2 = int(den.GetBinContent(b+1));
+        n1 = int(tmpNumeratorSignalCount);
+        n2 = int(denominatorCount);
         print "numerator: " + str(n1) + " and denominator: " + str(n2)
         if (n1 > n2):
             n1 = n2;
@@ -265,8 +327,10 @@ def Plot1DEfficiencyWithBkgSubtraction( tree, num, den, plotname, topTitle, xAxi
           errHigh = TEfficiency.ClopperPearson(n2, n1, 0.68269, True) - ratio;
     
 
-        print " done bin " + str(b) + " " + str(xtemp) + " : " + str(n1) + "(" + str(num.GetBinContent(b+1)) + ")" + " / " + str(n2) + "(" + str(den.GetBinContent(b+1)) + ")" + " = " + str(ratio) + " " + str(errLow) + " " + str(errHigh)
-        ytemp = ratio
+        print " done bin " + str(b) + " : " + str(num.GetXaxis().GetBinLowEdge(b+1)) + " - " + str(num.GetXaxis().GetBinUpEdge(b+1))
+        print " num = " + str(n1)+" = " + str(tmpNumeratorTotalCount) + " - " + str(tmpNumeratorNoiseControlRegionCount) + " / " + str(noiseSelectionCRFraction) + " | den = " + str(n2) 
+        print "ratio = " + str(ratio) + " " + str(errLow) + " " + str(errHigh)
+        ytemp = ratio / timeWindowCutEfficiency #here we correct for the time window cut inefficiency
         yerrlowtemp = errLow
         yerrhightemp = errHigh
       
